@@ -6,8 +6,27 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 import msvcrt
 import colorama
 
-# initialize colorama
+# init colorama
 colorama.init()
+
+# color constants
+WHITE = colorama.Fore.WHITE
+BLACK = colorama.Fore.BLACK
+RED = colorama.Fore.RED
+GREEN = colorama.Fore.GREEN
+BLUE = colorama.Fore.BLUE
+MAGENTA = colorama.Fore.MAGENTA
+YELLOW = colorama.Fore.YELLOW
+CYAN = colorama.Fore.CYAN
+LBLACK = colorama.Fore.LIGHTBLACK_EX
+LWHITE = colorama.Fore.LIGHTWHITE_EX
+LRED = colorama.Fore.LIGHTRED_EX
+LGREEN = colorama.Fore.LIGHTGREEN_EX
+LBLUE = colorama.Fore.LIGHTBLUE_EX
+LMAGENTA = colorama.Fore.LIGHTMAGENTA_EX
+LYELLOW = colorama.Fore.LIGHTYELLOW_EX
+LCYAN = colorama.Fore.LIGHTCYAN_EX
+RESET = colorama.Fore.RESET
 
 # raw encryption function
 def encryptData(data: bytes, key: str) -> bytes:
@@ -93,52 +112,52 @@ def masked_input(prompt="", mask_char="*"):
 
 # print extensions
 def print_status(step_number, total_steps, message):
-    print(f"{colorama.Fore.BLUE}[{step_number}/{total_steps}] {message}... ", end='', flush=True)
+    print(f"{BLUE}[{step_number}/{total_steps}] {message}... ", end='', flush=True)
 def print_done():
-    print(f"{colorama.Fore.GREEN}Done!{colorama.Fore.RESET}")
+    print(f"{GREEN}Done!")
 
 # gets mode from user
 def get_mode():
     while True:
-        mode = input(f"{colorama.Fore.YELLOW}Mode > {colorama.Fore.RESET}").strip().lower()
+        mode = input(f"{YELLOW}Mode > {WHITE}").strip().lower()
         if mode == 'e' or mode == 'd':
             return mode
         else:
-            print(f"{colorama.Fore.RED}Error: Invalid Mode!{colorama.Fore.RESET}")
-            print(f"{colorama.Fore.YELLOW}E = Encrypt{colorama.Fore.RESET}")
-            print(f"{colorama.Fore.YELLOW}D = Decrypt{colorama.Fore.RESET}")
+            print(f"{RED}Error: Invalid Mode!")
+            print(f"{YELLOW}E = Encrypt")
+            print(f"{YELLOW}D = Decrypt")
 
 # gets file path from user
 def get_file_path():
     while True:
-        file_path = input(f"{colorama.Fore.YELLOW}File Path > {colorama.Fore.RESET}").strip()
+        file_path = input(f"{YELLOW}File Path > {WHITE}").strip()
         if os.path.isfile(file_path):
             return file_path
         else:
-            print(f"{colorama.Fore.RED}Error: Invalid File!{colorama.Fore.RESET}")
+            print(f"{RED}Error: Invalid File!")
 
 # gets key from user
 def get_key(verify=False):
-    key = masked_input(f"{colorama.Fore.YELLOW}Key > {colorama.Fore.RESET}")
+    key = masked_input(f"{YELLOW}Key > {WHITE}")
     if verify:
-        confirm_key = masked_input(f"{colorama.Fore.YELLOW}Verify Key > {colorama.Fore.RESET}")
+        confirm_key = masked_input(f"{YELLOW}Verify Key > {WHITE}")
         if key != confirm_key:
-            print(f"{colorama.Fore.RED}Error: Keys do not match! Please try again.{colorama.Fore.RESET}")
+            print(f"{RED}Error: Keys do not match! Please try again.")
             return get_key(verify=True)
     return key
 
 # yes no prompt
 def yes_no_prompt(prompt):
     while True:
-        choice = input(f"{colorama.Fore.YELLOW}{prompt} > {colorama.Fore.RESET}").strip().lower()
+        choice = input(f"{YELLOW}{prompt} > {WHITE}").strip().lower()
         if choice == 'y':
             return True
         elif choice == 'n':
             return False
         else:
-            print(f"{colorama.Fore.RED}Error: Invalid input for yes/no question!{colorama.Fore.RESET}")
-            print(f"{colorama.Fore.YELLOW}Y = Yes{colorama.Fore.RESET}")
-            print(f"{colorama.Fore.YELLOW}N = No{colorama.Fore.RESET}")
+            print(f"{RED}Error: Invalid input for yes/no question!")
+            print(f"{YELLOW}Y = Yes")
+            print(f"{YELLOW}N = No")
 
 # function to encrypt a file
 def encrypt_file(file_path, key):
@@ -177,7 +196,7 @@ def encrypt_file(file_path, key):
             print_status(step, total_steps, description)
             success, error = overwrite_file(file_path, pattern_func)
             if not success:
-                print(f"{colorama.Fore.RED}Failed! Error: {error}{colorama.Fore.RESET}")
+                print(f"{RED}Failed! Error: {error}")
                 return False
             print_done()
             step += 1
@@ -194,10 +213,10 @@ def encrypt_file(file_path, key):
         try:
             decrypted_data = decryptData(new_encrypted_data, key)
             if decrypted_data != original_data:
-                print(f"{colorama.Fore.RED}Failed! Verification failed.{colorama.Fore.RESET}")
+                print(f"{RED}Failed! Verification failed.")
                 return False
         except Exception as e:
-            print(f"{colorama.Fore.RED}Failed! Error: {e}{colorama.Fore.RESET}")
+            print(f"{RED}Failed! Error: {e}")
             return False
         print_done()
         step += 1
@@ -212,7 +231,7 @@ def encrypt_file(file_path, key):
             print_status(step, total_steps, description)
             success, error = overwrite_file(backup_file_path, pattern_func)
             if not success:
-                print(f"{colorama.Fore.RED}Failed! Error: {error}{colorama.Fore.RESET}")
+                print(f"{RED}Failed! Error: {error}")
                 return False
             print_done()
             step += 1
@@ -221,18 +240,18 @@ def encrypt_file(file_path, key):
         try:
             os.remove(backup_file_path)
         except Exception as e:
-            print(f"{colorama.Fore.RED}Failed! Error: {e}{colorama.Fore.RESET}")
+            print(f"{RED}Failed! Error: {e}")
             return False
         print_done()
 
         new_file_path = file_path + '.enc'
         os.rename(file_path, new_file_path)
 
-        print(f"{colorama.Fore.GREEN}Encryption of file successful!{colorama.Fore.RESET}")
+        print(f"{GREEN}Encryption of file successful!")
         return True
 
     except Exception as e:
-        print(f"{colorama.Fore.RED}Failed! Error: {e}{colorama.Fore.RESET}")
+        print(f"{RED}Failed! Error: {e}")
         return False
 
 # function to decrypt a file with a key
@@ -241,10 +260,10 @@ def decrypt_file(file_path, key):
     step = 1
     try:
         if not file_path.endswith('.enc'):
-            print(f"{colorama.Fore.YELLOW}Warning: File does not end in .enc extension!{colorama.Fore.RESET}")
+            print(f"{YELLOW}Warning: File does not end in .enc extension!")
             proceed = yes_no_prompt("Proceed?")
             if not proceed:
-                print(f"{colorama.Fore.RED}Decryption of file aborted.{colorama.Fore.RESET}")
+                print(f"{RED}Decryption of file aborted.")
                 return False
 
         print_status(step, total_steps, "Reading file")
@@ -259,7 +278,7 @@ def decrypt_file(file_path, key):
             print_done()
             step += 1
         except Exception as e:
-            print(f"{colorama.Fore.RED}Failed! Error: {e}{colorama.Fore.RESET}")
+            print(f"{RED}Failed! Error: {e}")
             return False
 
         print_status(step, total_steps, "Creating temporary backup")
@@ -279,7 +298,7 @@ def decrypt_file(file_path, key):
         try:
             os.remove(backup_file_path)
         except Exception as e:
-            print(f"{colorama.Fore.RED}Failed! Error: {e}{colorama.ore.RESET}")
+            print(f"{RED}Failed! Error: {e}")
             return False
         print_done()
 
@@ -287,11 +306,11 @@ def decrypt_file(file_path, key):
             original_file_path = file_path[:-4]
             os.rename(file_path, original_file_path)
 
-        print(f"{colorama.Fore.GREEN}Decryption of file successful!{colorama.Fore.RESET}")
+        print(f"{GREEN}Decryption of file successful!")
         return True
 
     except Exception as e:
-        print(f"{colorama.Fore.RED}Failed! Error: {e}{colorama.Fore.RESET}")
+        print(f"{RED}Failed! Error: {e}")
         return False
 
 # main function
@@ -308,7 +327,7 @@ def main():
 
         continue_program = yes_no_prompt("Continue?")
         if not continue_program:
-            print(f"{colorama.Fore.GREEN}Exiting program. Goodbye!{colorama.Fore.RESET}")
+            print(f"{GREEN}Exiting program. Goodbye!")
             break
 
 if __name__ == '__main__':
