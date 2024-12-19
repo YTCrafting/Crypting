@@ -1,32 +1,10 @@
 import os
-import sys
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-import msvcrt
-import colorama
-
-# init colorama
-colorama.init()
-
-# color constants
-WHITE = colorama.Fore.WHITE
-BLACK = colorama.Fore.BLACK
-RED = colorama.Fore.RED
-GREEN = colorama.Fore.GREEN
-BLUE = colorama.Fore.BLUE
-MAGENTA = colorama.Fore.MAGENTA
-YELLOW = colorama.Fore.YELLOW
-CYAN = colorama.Fore.CYAN
-LBLACK = colorama.Fore.LIGHTBLACK_EX
-LWHITE = colorama.Fore.LIGHTWHITE_EX
-LRED = colorama.Fore.LIGHTRED_EX
-LGREEN = colorama.Fore.LIGHTGREEN_EX
-LBLUE = colorama.Fore.LIGHTBLUE_EX
-LMAGENTA = colorama.Fore.LIGHTMAGENTA_EX
-LYELLOW = colorama.Fore.LIGHTYELLOW_EX
-LCYAN = colorama.Fore.LIGHTCYAN_EX
-RESET = colorama.Fore.RESET
+import tkinter as tk
+from tkinter import filedialog
+from tkinter import messagebox
 
 # raw encryption function
 def encryptData(data: bytes, key: str) -> bytes:
@@ -89,103 +67,15 @@ def overwrite_file(file_path, pattern_func):
     except Exception as e:
         return False, str(e)
 
-# masked input for keys
-def masked_input(prompt="", mask_char="*"):
-    sys.stdout.write(prompt)
-    sys.stdout.flush()
-    password = ""
-    while True:
-        char = msvcrt.getch()
-        if char == b'\r':
-            break
-        elif char == b'\b':
-            if len(password) > 0:
-                sys.stdout.write('\b \b')
-                sys.stdout.flush()
-                password = password[:-1]
-        elif char != b'\x00' and char != b'\xe0':
-            sys.stdout.write(mask_char)
-            sys.stdout.flush()
-            password += char.decode('utf-8')
-    sys.stdout.write('\n')
-    return password
-
-# print extensions
-def print_status(step_number, total_steps, message):
-    print(f"{BLUE}[{step_number}/{total_steps}] {message}... ", end='', flush=True)
-def print_done():
-    print(f"{GREEN}Done!")
-
-# gets mode from user
-def get_mode():
-    while True:
-        mode = input(f"{YELLOW}Mode > {WHITE}").strip().lower()
-        if mode == 'e' or mode == 'd':
-            return mode
-        else:
-            print(f"{RED}Error: Invalid Mode!")
-            print(f"{YELLOW}E = Encrypt")
-            print(f"{YELLOW}D = Decrypt")
-
-# gets file path from user
-def get_file_path():
-    while True:
-        file_path = input(f"{YELLOW}File Path > {WHITE}").strip()
-        if os.path.isfile(file_path):
-            return file_path
-        else:
-            print(f"{RED}Error: Invalid File!")
-
-# gets key from user
-def get_key(verify=False):
-    key = masked_input(f"{YELLOW}Key > {WHITE}")
-    if verify:
-        confirm_key = masked_input(f"{YELLOW}Verify Key > {WHITE}")
-        if key != confirm_key:
-            print(f"{RED}Error: Keys do not match! Please try again.")
-            return get_key(verify=True)
-    return key
-
-# yes no prompt
-def yes_no_prompt(prompt):
-    while True:
-        choice = input(f"{YELLOW}{prompt} > {WHITE}").strip().lower()
-        if choice == 'y':
-            return True
-        elif choice == 'n':
-            return False
-        else:
-            print(f"{RED}Error: Invalid input for yes/no question!")
-            print(f"{YELLOW}Y = Yes")
-            print(f"{YELLOW}N = No")
-
 # function to encrypt a file
 def encrypt_file(file_path, key):
-    total_steps = 17
-    step = 1
     try:
-        print_status(step, total_steps, "Reading file")
         with open(file_path, 'rb') as f:
             original_data = f.read()
-        print_done()
-        step += 1
-
-        print_status(step, total_steps, "Creating temporary backup")
         backup_file_path = file_path + '.bup'
         with open(backup_file_path, 'wb') as f:
             f.write(original_data)
-        print_done()
-        step += 1
-
-        print_status(step, total_steps, "Preparing encryption algorithm")
-        print_done()
-        step += 1
-
-        print_status(step, total_steps, "Encrypting file data")
         encrypted_data = encryptData(original_data, key)
-        print_done()
-        step += 1
-
         for pattern_func, description in [
             (pattern_null, "Null byte pass over original file"),
             (pattern_random, "Random byte pass A over original file"),
@@ -193,34 +83,19 @@ def encrypt_file(file_path, key):
             (pattern_random, "Random byte pass B over original file"),
             (pattern_alternating, "Alternating bit pattern over original file"),
         ]:
-            print_status(step, total_steps, description)
             success, error = overwrite_file(file_path, pattern_func)
             if not success:
-                print(f"{RED}Failed! Error: {error}")
                 return False
-            print_done()
-            step += 1
-
-        print_status(step, total_steps, "Writing encrypted data to original file")
         with open(file_path, 'wb') as f:
             f.write(encrypted_data)
-        print_done()
-        step += 1
-
-        print_status(step, total_steps, "Verifying encrypted data")
         with open(file_path, 'rb') as f:
             new_encrypted_data = f.read()
         try:
             decrypted_data = decryptData(new_encrypted_data, key)
             if decrypted_data != original_data:
-                print(f"{RED}Failed! Verification failed.")
                 return False
         except Exception as e:
-            print(f"{RED}Failed! Error: {e}")
             return False
-        print_done()
-        step += 1
-
         for pattern_func, description in [
             (pattern_null, "Null byte pass over backup file"),
             (pattern_random, "Random byte pass A over backup file"),
@@ -228,107 +103,106 @@ def encrypt_file(file_path, key):
             (pattern_random, "Random byte pass B over backup file"),
             (pattern_alternating, "Alternating bit pattern over backup file"),
         ]:
-            print_status(step, total_steps, description)
             success, error = overwrite_file(backup_file_path, pattern_func)
             if not success:
-                print(f"{RED}Failed! Error: {error}")
                 return False
-            print_done()
-            step += 1
-
-        print_status(step, total_steps, "Deleting backup file")
         try:
             os.remove(backup_file_path)
         except Exception as e:
-            print(f"{RED}Failed! Error: {e}")
             return False
-        print_done()
-
         new_file_path = file_path + '.enc'
         os.rename(file_path, new_file_path)
-
-        print(f"{GREEN}Encryption of file successful!")
         return True
-
     except Exception as e:
-        print(f"{RED}Failed! Error: {e}")
         return False
 
 # function to decrypt a file with a key
 def decrypt_file(file_path, key):
-    total_steps = 5
-    step = 1
     try:
-        if not file_path.endswith('.enc'):
-            print(f"{YELLOW}Warning: File does not end in .enc extension!")
-            proceed = yes_no_prompt("Proceed?")
-            if not proceed:
-                print(f"{RED}Decryption of file aborted.")
-                return False
-
-        print_status(step, total_steps, "Reading file")
         with open(file_path, 'rb') as f:
             encrypted_data = f.read()
-        print_done()
-        step += 1
-
-        print_status(step, total_steps, "Decrypting file data")
         try:
             decrypted_data = decryptData(encrypted_data, key)
-            print_done()
-            step += 1
         except Exception as e:
-            print(f"{RED}Failed! Error: {e}")
             return False
-
-        print_status(step, total_steps, "Creating temporary backup")
         backup_file_path = file_path + '.bup'
         with open(backup_file_path, 'wb') as f:
             f.write(encrypted_data)
-        print_done()
-        step += 1
-
-        print_status(step, total_steps, "Writing data to original file")
         with open(file_path, 'wb') as f:
             f.write(decrypted_data)
-        print_done()
-        step += 1
-
-        print_status(step, total_steps, "Deleting backup")
         try:
             os.remove(backup_file_path)
         except Exception as e:
-            print(f"{RED}Failed! Error: {e}")
             return False
-        print_done()
-
         if file_path.endswith('.enc'):
             original_file_path = file_path[:-4]
             os.rename(file_path, original_file_path)
-
-        print(f"{GREEN}Decryption of file successful!")
         return True
-
     except Exception as e:
-        print(f"{RED}Failed! Error: {e}")
         return False
 
-# main function
-def main():
-    while True:
-        mode = get_mode()
-        file_path = get_file_path()
-        key = get_key(verify=(mode == 'e'))
+# create window
+root = tk.Tk()
+root.title("Crypting")
 
-        if mode == 'e':
-            success = encrypt_file(file_path, key)
-        elif mode == 'd':
-            success = decrypt_file(file_path, key)
+# mode dropdown
+modeVar = tk.StringVar()
+modeVar.set("Encrypt")
+modeOptionMenu = tk.OptionMenu(root, modeVar, "Encrypt", "Decrypt")
+modeOptionMenu.pack(pady = 20)
 
-        continue_program = yes_no_prompt("Continue?")
-        if not continue_program:
-            print(f"{GREEN}Exiting program. Goodbye!")
-            break
+# selected file list
+filelistFrame = tk.Frame(root)
+filelistFrame.pack(padx = 10, pady = 10, fill = tk.BOTH, expand = True)
+filelistScrollbar = tk.Scrollbar(filelistFrame)
+filelistScrollbar.pack(side = tk.RIGHT, fill = tk.Y)
+filelistListbox = tk.Listbox(filelistFrame, yscrollcommand = filelistScrollbar.set, height = 15, width = 40)
+filelistListbox.pack(side = tk.LEFT, fill = tk.BOTH, expand = True)
+filelistScrollbar.config(command = filelistListbox.yview)
 
-if __name__ == '__main__':
-    main()
+# button to add file
+def addfileCmd():
+    filePath = filedialog.askopenfilename(title="Add File")
+    if filePath:
+        filelistListbox.insert(tk.END, filePath)
+addfileButton = tk.Button(root, text = "Add File", command = addfileCmd)
+addfileButton.pack(pady = 10)
+
+# key input field
+keyLabel = tk.Label(root, text = "Key")
+keyLabel.pack(pady = (10, 0))
+keyEntry = tk.Entry(root, width = 40)
+keyEntry.pack(pady = (0, 10))
+
+# start button
+def startCmd():
+    keyString = keyEntry.get()
+    if not keyString:
+        messagebox.showerror("Error", "Please enter a key.")
+        return
+    mode = modeVar.get()
+    files = filelistListbox.get(0, tk.END)
+    if not files:
+        messagebox.showerror("Error", "Please add at least one file.")
+        return
+    for file in files:
+        if not os.path.exists(file):
+            messagebox.showerror("Error", f"File not found: {file}")
+            continue
+        if mode == "Encrypt":
+            success = encrypt_file(file, keyString)
+            if not success:
+                messagebox.showinfo("Success", f"File encrypted: {file}")
+            else:
+                messagebox.showerror("Error", f"Failed to encrypt: {file}")
+        elif mode == "Decrypt":
+            success = decrypt_file(file, keyString)
+            if success:
+                messagebox.showinfo("Success", f"File decrypted: {file}")
+            else:
+                messagebox.showerror("Error", f"Failed to decrypt: {file}")
+startButton = tk.Button(root, text = "Start", command = startCmd)
+startButton.pack(pady = 10)
+
+# start app
+root.mainloop()
