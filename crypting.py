@@ -168,6 +168,14 @@ def addfileCmd():
 addfileButton = tk.Button(root, text = "Add File", command = addfileCmd)
 addfileButton.pack(pady = 10)
 
+# button to remove file
+def removefileCmd():
+    selected_indices = filelistListbox.curselection()
+    for index in reversed(selected_indices):
+        filelistListbox.delete(index)
+removefileButton = tk.Button(root, text = "Remove File", command = removefileCmd)
+removefileButton.pack(pady = 10)
+
 # key input field
 keyLabel = tk.Label(root, text = "Key")
 keyLabel.pack(pady = (10, 0))
