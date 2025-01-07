@@ -141,76 +141,93 @@ def decrypt_file(file_path, key):
     except Exception as e:
         return False
 
+# init variables
+files = []
+
 # create window
 root = tk.Tk()
 root.title("Crypting")
 
-# mode dropdown
-modeVar = tk.StringVar()
-modeVar.set("Encrypt")
-modeOptionMenu = tk.OptionMenu(root, modeVar, "Encrypt", "Decrypt")
-modeOptionMenu.pack(pady = 20)
+# mode section
+modeFrame = tk.Frame(root)
+modeLabel = tk.Label(modeFrame, text="Mode:")
+modeVariable = tk.StringVar(modeFrame, "Encrypt")
+modeOptionMenu = tk.OptionMenu(modeFrame, modeVariable, "Encrypt", "Decrypt")
+modeLabel.pack(side="left")
+modeOptionMenu.pack(side="right")
+modeFrame.pack(pady=5)
 
-# selected file list
-filelistFrame = tk.Frame(root)
-filelistFrame.pack(padx = 10, pady = 10, fill = tk.BOTH, expand = True)
-filelistScrollbar = tk.Scrollbar(filelistFrame)
-filelistScrollbar.pack(side = tk.RIGHT, fill = tk.Y)
-filelistListbox = tk.Listbox(filelistFrame, yscrollcommand = filelistScrollbar.set, height = 15, width = 40)
-filelistListbox.pack(side = tk.LEFT, fill = tk.BOTH, expand = True)
-filelistScrollbar.config(command = filelistListbox.yview)
+# files section
+def filesUpdate():
+    filesListbox.delete(0, tk.END)
+    for item in files:
+        filesListbox.insert(tk.END, item)
 
-# button to add file
-def addfileCmd():
-    filePath = filedialog.askopenfilename(title="Add File")
-    if filePath:
-        filelistListbox.insert(tk.END, filePath)
-addfileButton = tk.Button(root, text = "Add File", command = addfileCmd)
-addfileButton.pack(pady = 10)
+def filesAdd():
+    file_path = filesText.get("1.0", tk.END).strip()
+    if file_path:
+        files.append(file_path)
+        filesUpdate()
 
-# button to remove file
-def removefileCmd():
-    selected_indices = filelistListbox.curselection()
-    for index in reversed(selected_indices):
-        filelistListbox.delete(index)
-removefileButton = tk.Button(root, text = "Remove File", command = removefileCmd)
-removefileButton.pack(pady = 10)
+def filesRemoveSelected():
+    selected = filesListbox.curselection()
+    if selected:
+        files.pop(selected[0])
+        filesUpdate()
 
-# key input field
-keyLabel = tk.Label(root, text = "Key")
-keyLabel.pack(pady = (10, 0))
-keyEntry = tk.Entry(root, width = 40)
-keyEntry.pack(pady = (0, 10))
+def filesChoose():
+    file_path = filedialog.askopenfilename()
+    if file_path:
+        filesText.delete("1.0", tk.END)
+        filesText.insert("1.0", file_path)
 
-# start button
-def startCmd():
-    keyString = keyEntry.get()
-    if not keyString:
-        messagebox.showerror("Error", "Please enter a key.")
-        return
-    mode = modeVar.get()
-    files = filelistListbox.get(0, tk.END)
-    if not files:
-        messagebox.showerror("Error", "Please add at least one file.")
-        return
+filesFrame = tk.Frame(root)
+filesText = tk.Text(filesFrame, height=1, width=32)
+filesButtonsFrame = tk.Frame(filesFrame)
+filesButtonsAddButton = tk.Button(filesButtonsFrame, text="        Add        ", command=filesAdd)
+filesButtonsRemoveButton = tk.Button(filesButtonsFrame, text="    Remove    ", command=filesRemoveSelected)
+filesButtonsChooseButton = tk.Button(filesButtonsFrame, text="    Choose    ", command=filesChoose)
+filesListbox = tk.Listbox(filesFrame, width=38)
+filesButtonsAddButton.pack(side="left")
+filesButtonsRemoveButton.pack(side="left")
+filesButtonsChooseButton.pack(side="left")
+filesText.pack()
+filesButtonsFrame.pack(pady=5, padx=5)
+filesListbox.pack(pady=5)
+filesFrame.pack(pady=5)
+
+# key section
+keyFrame = tk.Frame(root)
+keyLabel = tk.Label(keyFrame, text="Key:")
+keyText = tk.Text(keyFrame, width=27, height=1)
+keyLabel.pack(side="left", padx=5)
+keyText.pack(side="right")
+keyFrame.pack()
+
+# start section
+def startButtonCmd():
+    key = keyText.get("1.0", tk.END).strip()
+    mode = modeVariable.get()
+    statuses = []
     for file in files:
-        if not os.path.exists(file):
-            messagebox.showerror("Error", f"File not found: {file}")
-            continue
         if mode == "Encrypt":
-            success = encrypt_file(file, keyString)
-            if not success:
-                messagebox.showinfo("Success", f"File encrypted: {file}")
-            else:
-                messagebox.showerror("Error", f"Failed to encrypt: {file}")
+            status = encrypt_file(file, key)
         elif mode == "Decrypt":
-            success = decrypt_file(file, keyString)
-            if success:
-                messagebox.showinfo("Success", f"File decrypted: {file}")
-            else:
-                messagebox.showerror("Error", f"Failed to decrypt: {file}")
-startButton = tk.Button(root, text = "Start", command = startCmd)
-startButton.pack(pady = 10)
+            status = decrypt_file(file, key)
+        statuses.append(status)
+    if statuses.count(False) > 0:
+        messagebox.showwarning(
+            f"{statuses.count(False)} Errors",
+            "\n".join(f"{'SUCCESS' if statuses[i] else 'FAILED'} - {file}" for i, file in enumerate(files))
+        )
+    else:
+        messagebox.showinfo(
+            "Success",
+            "\n".join(f"{'SUCCESS' if statuses[i] else 'FAILED'} - {file}" for i, file in enumerate(files))
+        )
+
+startButton = tk.Button(root, text="              Start              ", command=startButtonCmd)
+startButton.pack(pady=10)
 
 # start app
 root.mainloop()
